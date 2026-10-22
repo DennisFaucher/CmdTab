@@ -156,3 +156,7 @@ Sources/CmdTab/
   No event-tap app (AltTab included) can work around this.
 - A tap can also be silently disabled by the system (secure input ending, a stuck
   callback). A 3-second health check re-enables it and logs when it does.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
