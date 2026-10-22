@@ -7,13 +7,19 @@ SIGN_ID := CmdTab Local Signing
 SIGNING_DIR := $(HOME)/Library/Application Support/CmdTab/signing
 KEYCHAIN := $(HOME)/Library/Keychains/login.keychain-db
 
-.PHONY: build run app-bundle install universal dist clean reset-permissions sign-setup sign-status
+.PHONY: build run app-bundle install universal dist shot clean reset-permissions sign-setup sign-status
 
 build:
 	swift build -c release
 
 run:
 	swift run
+
+# README screenshot. Draws the panel from invented window titles only — it never reads
+# your real windows, so what you have open cannot end up in the image.
+shot: build
+	$(BIN) --fake --out=Resources/panel.png
+	$(BIN) --fake --text=doc --out=Resources/panel-filtered.png
 
 app-bundle: build
 	rm -rf $(APP)

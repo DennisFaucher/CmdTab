@@ -16,6 +16,12 @@ if CommandLine.arguments.contains("--dump") {
     exit(0)
 }
 
+// Screenshot mode: `CmdTab --fake --out=panel.png` draws the panel from invented window
+// titles and exits. Also before the instance guard — it never touches the system.
+if CommandLine.arguments.contains("--fake") {
+    exit(FakeShot.run())
+}
+
 // Single instance guard: two copies of the app (e.g. one in ~/Applications and one
 // built in the repo) would install two event taps and fight over Cmd+Tab.
 if let identifier = Bundle.main.bundleIdentifier {
