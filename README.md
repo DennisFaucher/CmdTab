@@ -3,6 +3,8 @@
 A window-level replacement for the macOS ⌘⇥ app switcher. One flat, scannable list of
 `App Name: Window Title` — no icons, no thumbnails, no animations.
 
+<img width="432" height="281" alt="image" src="https://github.com/user-attachments/assets/4f55f25b-1834-44ae-8843-ca140a133968" />
+
 ## Behaviour
 
 | Key | Action |
