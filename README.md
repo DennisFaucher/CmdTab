@@ -86,6 +86,17 @@ If you ever lose the identity (new keychain, new machine), `make sign-setup` rec
 it — but a *regenerated* certificate is a different identity, so you would have to grant
 access once more. `make reset-permissions` clears the stale rows.
 
+### Releases
+
+```sh
+make dist        # -> dist/CmdTab-0.01.zip + its sha256
+```
+
+`make dist` compiles both architectures into one universal binary, signs it, and zips
+the app bundle. Release builds are **not notarized** — there is no Apple Developer
+account behind this — so a downloaded copy has to have its quarantine flag cleared once
+(`xattr -dr com.apple.quarantine CmdTab.app`) or be opened via right-click → Open.
+
 ## Diagnostics
 
 ```sh

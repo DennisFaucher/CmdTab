@@ -1,3 +1,4 @@
 .build/
 CmdTab.app/
+dist/
 .DS_Store
