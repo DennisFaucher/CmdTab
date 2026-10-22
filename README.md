@@ -30,8 +30,11 @@ end up in the picture.
 The panel is **sticky**: it stays open after you let go of ⌘, so typing a search term
 is a normal keypress and not a ⌘-shortcut. It closes on Enter, Escape, a click
 outside the panel, or after 15 seconds of no keyboard activity.
-Sort order is **alphabetical by app, then window title** (the default), or front-to-back
-window stacking (most recently used first) — switchable from the menu bar icon.
+Sort order is **alphabetical by app, then window title** (the default), or **most recently
+used** — switchable from the menu bar icon. Most recently used means actual activation
+history, observed via `NSWorkspace.didActivateApplicationNotification` and kept per app,
+not window stacking order. With it selected, row 0 is the app you are in and row 1 is the
+app you came from, so pressing ⌘⇥ then ⏎ bounces you back to where you were.
 
 ## Why Swift
 
@@ -110,10 +113,17 @@ account behind this — so a downloaded copy has to have its quarantine flag cle
 ```sh
 tail -f ~/Library/Logs/CmdTab.log   # launch, trust state, event-tap state
 ./.build/release/CmdTab --dump      # print the window list + enumeration time
+./.build/release/CmdTab --history-test   # check the most-recently-used ordering rules
 open ./CmdTab.app --args --demo     # render the panel without the hotkey
 open ./CmdTab.app --args --demo --text=term   # ...with a pre-typed query
 open ./CmdTab.app --args --logkeys  # log every keypress the tap sees (noisy)
 ```
+
+`--history-test` exercises the ordering contract against synthetic windows: that the
+most recently activated app sorts first, that history wins over stacking order, that
+unseen apps keep their place at the end, that multiple windows of one app stay in order,
+and that row 0 is the current app while row 1 is the previous one. It exits non-zero if
+any check fails, so it is usable as a smoke test after a change to ordering.
 
 By default the log records ⌘⇥ presses and any key pressed while the panel is open —
 enough to tell whether the tap is alive, without logging ordinary typing.

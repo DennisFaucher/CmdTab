@@ -39,6 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         setupStatusItem()
         wireTap()
 
+        // Real activation history for the "Most Recently Used" sort order.
+        AppHistory.start()
+
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
             selector: #selector(applicationActivated),
@@ -153,6 +156,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func applicationActivated() {
         guard isTrusted else { return }
+        // While the switcher panel is up it is the frontmost window, so the stack read
+        // here would be polluted by it. The panel refreshes itself from the real stack
+        // on open; just warm it when nothing is showing.
+        guard !Switcher.shared.isVisible else { return }
         WindowCache.refreshAsync(mode: Preferences.sortMode)
     }
 
@@ -236,6 +243,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func setSortMode(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String, let mode = SortMode(rawValue: raw) else { return }
         Preferences.sortMode = mode
+        guard !Switcher.shared.isVisible else { return }
         WindowCache.refreshAsync(mode: mode)
     }
 

@@ -104,6 +104,10 @@ enum WindowList {
                 if titleOrder != .orderedSame { return titleOrder == .orderedAscending }
                 return lhs.pid < rhs.pid
             }
+        } else {
+            // Recent mode: real activation history, not stacking order. The raw list
+            // above is in front-to-back z-order, which is only a proxy for recency.
+            result = AppHistory.sort(result)
         }
         return result
     }
@@ -128,6 +132,17 @@ enum WindowCache {
         windows = WindowList.current(mode: mode)
         lastDuration = CFAbsoluteTimeGetCurrent() - started
         stamp = Date()
+    }
+
+    /// Blocking refresh on the hot path.
+    ///
+    /// Enumeration costs ~10-30 ms warm, which is inside a single frame, and it must
+    /// happen *before* the panel is ordered front. The panel is a window: once it is
+    /// frontmost it tops the front-to-back stack, so any list read after that ranks the
+    /// previously-focused window below where it belongs — which makes "the second row
+    /// is the window you came from" quietly false. Reading first is the whole point.
+    static func refreshBlocking(mode: SortMode) {
+        refresh(mode: mode)
     }
 
     /// Non-blocking refresh — the hot path. Enumeration is all cross-process IPC,

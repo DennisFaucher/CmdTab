@@ -16,12 +16,33 @@ if CommandLine.arguments.contains("--dump") {
     exit(0)
 }
 
+// Diagnostic: shows what history the running app has recorded, by asking it via its log.
+// `--dump-history` reads the log, since history lives in the running process.
+if CommandLine.arguments.contains("--dump-history") {
+    AppHistory.start()
+    // Give the observer a moment to catch up, then report.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        print(AppHistory.describe())
+        let ranked = WindowList.current(mode: .recent)
+        print("\nrecent order with history applied:")
+        for (index, window) in ranked.prefix(10).enumerated() {
+            print(String(format: "%2d  %@", index, window.appName))
+        }
+        exit(0)
+    }
+    RunLoop.main.run()
+}
+
 // Screenshot mode: `CmdTab --fake --out=panel.png` draws the panel from invented window
 // titles and exits. Also before the instance guard — it never touches the system.
 if CommandLine.arguments.contains("--fake") {
     exit(FakeShot.run())
 }
 
+// Diagnostic: checks the MRU ordering contract against synthetic data.
+if CommandLine.arguments.contains("--history-test") {
+    exit(HistoryTest.run())
+}
 // Single instance guard: two copies of the app (e.g. one in ~/Applications and one
 // built in the repo) would install two event taps and fight over Cmd+Tab.
 if let identifier = Bundle.main.bundleIdentifier {

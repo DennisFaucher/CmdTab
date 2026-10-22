@@ -53,7 +53,10 @@ final class Switcher {
     // MARK: - Presentation
 
     func show() {
-        // Render immediately from the last snapshot, then correct it in the background.
+        // Read the stack now rather than in the background, so the list cannot be
+        // replaced underneath a keystroke. Enumeration is ~10-30 ms warm.
+        WindowCache.refreshBlocking(mode: Preferences.sortMode)
+
         all = WindowCache.current
         query = ""
         interacted = false
@@ -61,38 +64,24 @@ final class Switcher {
         applyFilter(resetSelection: false)
         panel.orderFrontRegardless()
         bumpIdleTimer()
-
-        WindowCache.refreshAsync(mode: Preferences.sortMode) { [weak self] in
-            self?.adoptRefreshedList()
-        }
     }
 
-    /// Most-recently-used order means "previous window" is the useful default;
-    /// an alphabetical list has no such thing, so start at the top.
+    /// Row 0 is the app you are in right now (history's most recent entry), so the
+    /// useful default is row 1: the app you switched away from. That is what makes
+    /// "AppA -> AppB, press Cmd+Tab" land on AppA. Enter now takes you to the previous
+    /// app, and a second press-and-release Alt-Tab style bounce works as expected.
+    /// An alphabetical list has no notion of "previous", so it starts at the top.
     private func initialSelection() -> Int {
         Preferences.sortMode == .recent && all.count > 1 ? 1 : 0
     }
 
-    /// Apply a background refresh, unless the user has already started driving the list.
-    private func adoptRefreshedList() {
-        guard panel.isVisible, !interacted else { return }
-        let previous = shown.indices.contains(selection) ? shown[selection] : nil
-
-        all = WindowCache.current
-        shown = Self.filter(all, query: query)
-
-        if let previous,
-           let index = shown.firstIndex(where: { $0.pid == previous.pid && $0.title == previous.title }) {
-            selection = index
-        } else {
-            selection = initialSelection()
-        }
-
-        list.rows = shown
-        list.query = query
-        list.setSelection(selection)
-        relayout()
-        bumpIdleTimer()
+    /// Warming hook: after the panel closes, refill the cache from the current stack so
+    /// the next open can render instantly. Never runs while the panel is up — the panel
+    /// is the frontmost window then, so the stack it would read is not the one the user
+    /// sees.
+    private func warmCacheAfterClose() {
+        guard !panel.isVisible else { return }
+        WindowCache.refreshAsync(mode: Preferences.sortMode)
     }
 
     /// The panel swallows keys while it is up, so make sure it can never outstay its
@@ -113,6 +102,7 @@ final class Switcher {
         query = ""
         selection = 0
         interacted = false
+        warmCacheAfterClose()
     }
 
     private func applyFilter(resetSelection: Bool) {
@@ -198,6 +188,9 @@ final class Switcher {
         guard selection < shown.count else { hide(); return }
         let target = shown[selection]
         hide()
+        // Committing does not always fire an activation notification (the app may
+        // already be active), so record it explicitly.
+        AppHistory.record(target.pid)
         target.focus()
     }
 
