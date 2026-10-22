@@ -100,7 +100,7 @@ access once more. `make reset-permissions` clears the stale rows.
 ### Releases
 
 ```sh
-make dist        # -> dist/CmdTab-0.01.zip + its sha256
+make dist        # -> dist/CmdTab-0.02.zip + its sha256
 ```
 
 `make dist` compiles both architectures into one universal binary, signs it, and zips

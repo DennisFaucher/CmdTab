@@ -1,5 +1,5 @@
 APP := CmdTab.app
-VERSION := 0.01
+VERSION := 0.02
 DIST := dist
 UNIVERSAL := .build/universal/CmdTab
 BIN ?= .build/release/CmdTab
