@@ -1,8 +1,8 @@
 import Cocoa
 
-/// `--history-test` exercises AppHistory.sort and the row-0 selection rule with
-/// synthetic data, so the ordering contract can be checked without a GUI.
-/// Prints app names only.
+/// `--history-test` exercises AppHistory.sort, the row-0 selection rule, and the 1–9
+/// shortcut key mapping with synthetic data, so those contracts can be checked without
+/// a GUI. Prints app names only.
 enum HistoryTest {
     static func run() -> Int32 {
         _ = NSApplication.shared
@@ -124,6 +124,23 @@ enum HistoryTest {
             "row 1 is the app you came from (the selection)",
             [ordered[1].appName], ["AppA"]
         )
+
+        // The 1–9 shortcuts are keyed by physical key code, so both the number row and
+        // the numeric keypad reach the same row, and nothing else is a shortcut.
+        func checkRow(_ label: String, _ keyCode: Int64, _ want: Int?) {
+            let got = Switcher.shortcutRow(forKeyCode: keyCode)
+            let ok = got == want
+            if !ok { failures += 1 }
+            print("\(ok ? "PASS" : "FAIL")  \(label)")
+            if !ok { print("      got:  \(String(describing: got)), want: \(String(describing: want))") }
+        }
+        checkRow("number-row 1 maps to row 0", 18, 0)
+        checkRow("number-row 5 maps to row 4", 23, 4)
+        checkRow("number-row 9 maps to row 8", 25, 8)
+        checkRow("keypad 5 maps to row 4", 87, 4)
+        checkRow("keypad 9 maps to row 8", 92, 8)
+        checkRow("a letter is not a shortcut", 17, nil)     // "t"
+        checkRow("0 is not a shortcut", 29, nil)
 
         print(failures == 0 ? "\nall checks passed" : "\n\(failures) check(s) failed")
         return failures == 0 ? 0 : 1

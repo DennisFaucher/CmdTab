@@ -130,6 +130,20 @@ final class Switcher {
 
     // MARK: - Input
 
+    /// Physical key codes for the 1–9 row shortcuts. Key codes rather than characters so
+    /// the shortcut stays on the same key regardless of what the layout prints there
+    /// (the number row and the numeric keypad both map to the same row).
+    private static let shortcutKeyCodes: [Int64: Int] = [
+        18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9,
+        83: 1, 84: 2, 85: 3, 86: 4, 87: 5, 88: 6, 89: 7, 91: 8, 92: 9,
+    ]
+
+    /// Zero-based row index for a 1–9 shortcut, or nil when the key is not one of them.
+    /// Internal rather than private so `--history-test` can pin the mapping down.
+    static func shortcutRow(forKeyCode keyCode: Int64) -> Int? {
+        shortcutKeyCodes[keyCode].map { $0 - 1 }
+    }
+
     /// Returns true when the event should be swallowed.
     /// The panel is sticky: it stays up after Cmd is released so you can type.
     /// Enter opens the selected window; Escape dismisses.
@@ -141,6 +155,17 @@ final class Switcher {
                   !flags.contains(.maskControl)
             else { return false }
             show()
+            return true
+        }
+
+        // 1–9 jump straight to the row carrying that number: the panel closes and that
+        // window is focused, which is the whole point of the numbering. Because the
+        // digits are spent here they are not available as filter characters; letters are.
+        if let row = Self.shortcutRow(forKeyCode: keyCode) {
+            if row < shown.count {
+                selection = row
+                commit()
+            }
             return true
         }
 

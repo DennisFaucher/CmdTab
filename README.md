@@ -1,7 +1,8 @@
 # CmdTab
 
 A window-level replacement for the macOS ⌘⇥ app switcher. One flat, scannable list of
-`App Name: Window Title` — no icons, no thumbnails, no animations.
+`App Name: Window Title` — no icons, no thumbnails, no animations. The first nine rows are
+numbered, so you can jump straight to one.
 
 <img width="432" alt="CmdTab showing a list of windows as App Name: Window Title" src="https://raw.githubusercontent.com/DennisFaucher/CmdTab/main/Resources/panel.png">
 
@@ -21,11 +22,18 @@ end up in the picture.
 | ⌘⇥ again / ⇥ | Move down |
 | ⇧⌘⇥ / ⇧⇥ | Move up |
 | ↑ / ↓ | Move |
+| 1–9 | Jump straight to that row: close the panel and focus the window |
 | type | Filter the list live |
 | ⌫ | Delete a character of the query |
 | ⏎ / Enter | Open the selected window and close the panel |
 | esc | Dismiss without switching |
 | click a row | Open that window |
+
+The first nine rows carry a number to the left of the app name, and that number is a
+shortcut rather than a filter character: pressing `5` closes the panel and focuses row 5.
+The numbers follow the row's position in the list, so filtering first narrows what they
+point at — `doc` then `2` opens the second match. Because the digits are spent on the
+shortcut, a filter query cannot contain one; letters still work as before.
 
 The panel is **sticky**: it stays open after you let go of ⌘, so typing a search term
 is a normal keypress and not a ⌘-shortcut. It closes on Enter, Escape, a click
@@ -122,8 +130,10 @@ open ./CmdTab.app --args --logkeys  # log every keypress the tap sees (noisy)
 `--history-test` exercises the ordering contract against synthetic windows: that the
 most recently activated app sorts first, that history wins over stacking order, that
 unseen apps keep their place at the end, that multiple windows of one app stay in order,
-and that row 0 is the current app while row 1 is the previous one. It exits non-zero if
-any check fails, so it is usable as a smoke test after a change to ordering.
+and that row 0 is the current app while row 1 is the previous one. It also checks that the
+1–9 shortcuts map to the intended rows on both the number row and the numeric keypad. It
+exits non-zero if any check fails, so it is usable as a smoke test after a change to
+ordering or shortcuts.
 
 By default the log records ⌘⇥ presses and any key pressed while the panel is open —
 enough to tell whether the tap is alive, without logging ordinary typing.

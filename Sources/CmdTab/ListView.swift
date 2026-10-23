@@ -12,6 +12,9 @@ final class ListView: NSView {
 
     private let hPad: CGFloat = 12
     private let rowHeight: CGFloat = 21
+    /// Width of the 1–9 shortcut column. Reserved on every row, drawn only where a
+    /// number exists, so the app names stay in one left edge.
+    private let numberGutter: CGFloat = 18
     private let headerHeight: CGFloat = 26
     private let hintHeight: CGFloat = 20
     private let bottomPad: CGFloat = 6
@@ -34,7 +37,7 @@ final class ListView: NSView {
         textWidth = max(textWidth, (Self.hintText as NSString).size(withAttributes: [.font: Self.hintFont]).width)
         if rows.isEmpty { textWidth = max(textWidth, 190) }
 
-        let width = min(max(textWidth + hPad * 2 + 12, 400), 860)
+        let width = min(max(textWidth + numberGutter + hPad * 2 + 12, 400), 860)
 
         var height = hPad
         if !query.isEmpty { height += headerHeight }
@@ -61,8 +64,9 @@ final class ListView: NSView {
     private static let nameFont = NSFont.systemFont(ofSize: 13, weight: .medium)
     private static let titleFont = NSFont.systemFont(ofSize: 12.5)
     private static let queryFont = NSFont.systemFont(ofSize: 12.5, weight: .medium)
+    private static let numberFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
     static let hintFont = NSFont.systemFont(ofSize: 10.5)
-    static let hintText = "↑↓ move   ·   return opens   ·   type to search   ·   esc dismiss"
+    static let hintText = "↑↓ move   ·   1–9 jump   ·   return opens   ·   type to search   ·   esc dismiss"
 
     private static func paragraph(_ color: NSColor) -> NSParagraphStyle {
         let style = NSMutableParagraphStyle()
@@ -87,6 +91,17 @@ final class ListView: NSView {
             .font: titleFont, .foregroundColor: secondary, .paragraphStyle: style,
         ]))
         return text
+    }
+
+    /// Right-aligned shortcut number for the 1–9 column.
+    private static func numberString(_ number: Int, selected: Bool) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        style.alignment = .right
+        return NSAttributedString(string: "\(number)", attributes: [
+            .font: numberFont,
+            .foregroundColor: selected ? NSColor.white.withAlphaComponent(0.62) : NSColor.tertiaryLabelColor,
+            .paragraphStyle: style,
+        ])
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -141,11 +156,24 @@ final class ListView: NSView {
                     pill.fill()
                 }
 
+                // Numbers follow the row's rank, not the visible slot, so "5" means the
+                // same row whether or not the list is scrolled.
+                if index < 9 {
+                    let label = Self.numberString(index + 1, selected: index == selection)
+                    let labelSize = label.size()
+                    label.draw(in: NSRect(
+                        x: rect.minX + 2,
+                        y: rect.midY - labelSize.height / 2,
+                        width: numberGutter - 6,
+                        height: labelSize.height
+                    ))
+                }
+
                 let text = Self.rowString(rows[index], selected: index == selection)
                 let size = text.size()
-                text.draw(in: NSRect(x: rect.minX + 6,
+                text.draw(in: NSRect(x: rect.minX + 6 + numberGutter,
                                      y: rect.midY - size.height / 2,
-                                     width: max(0, rect.width - 12),
+                                     width: max(0, rect.width - 12 - numberGutter),
                                      height: size.height))
             }
         }
